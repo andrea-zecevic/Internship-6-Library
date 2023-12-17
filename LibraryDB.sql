@@ -93,3 +93,64 @@ CREATE TABLE Payments (
     PaymentDate DATE,
     Amount DECIMAL(10, 2)
 )
+
+
+-- Function 
+CREATE OR REPLACE FUNCTION BorrowBook(CopyId INT, UserId INT)
+RETURNS VOID AS $$
+DECLARE
+    MaxBorrowings INT := 3;
+    BorrowDuration INTERVAL := '20 days';
+    CurrentBorrowingsCount INT;
+BEGIN
+    -- Check number of borrowings
+    SELECT COUNT(*)
+    INTO CurrentBorrowingsCount
+    FROM Borrowings
+    WHERE UserId = UserId AND ReturningDate IS NULL;
+
+    IF CurrentBorrowingsCount >= MaxBorrowings THEN
+        RAISE EXCEPTION 'User already has the max number of borrowings.';
+    END IF;
+
+    -- Insert new borrowing
+    INSERT INTO Borrowings (CopyId, UserId, BorrowingDate, ReturningDate)
+    VALUES (CopyId, UserId, CURRENT_DATE, CURRENT_DATE + BorrowDuration);
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+-- Constraints
+ALTER TABLE Countries 
+ADD CONSTRAINT CheckSalary 
+CHECK (AverageSalary >= 0)
+
+ALTER TABLE Books 
+ADD CONSTRAINT CheckPages 
+CHECK (NumberOfPages > 0)
+
+ALTER TABLE Authors 
+ADD CONSTRAINT CheckBirthdate
+CHECK (BirthDate <= CURRENT_DATE)
+
+ALTER TABLE Books 
+ADD CONSTRAINT PricePositive 
+CHECK (Price > 0)
+
+ALTER TABLE Libraries 
+ADD CONSTRAINT WorkingHoursNotNull 
+CHECK (WorkingHours IS NOT NULL AND WorkingHours <> '')
+
+ALTER TABLE Books 
+ADD CONSTRAINT PublicationDate 
+CHECK (PublicationDate <= CURRENT_DATE)
+
+ALTER TABLE Libraries 
+ADD CONSTRAINT AddressNotNull 
+CHECK (Address IS NOT NULL AND Address <> '')
+
+
+
+
+
